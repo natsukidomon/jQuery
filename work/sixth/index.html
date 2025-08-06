@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../../common/css/reset.css">
+  <link rel="stylesheet" href="../../common/css/base.css">
+  <link rel="stylesheet" href="./css/style.css">
+  <title>Document</title>
+</head>
+<body>
+  <div class="wrapper" id="wrapper">
+    <button type="button" class="btn search-btn" id="pokemon_search">ポケモンを探す</button>
+  </div>
+  <script src="../../common/js/jquery.js"></script>
+  <script>
+// 回答はここに書いてね
+
+ // 「捕まえる」失敗時の画面表示
+ const failHtml =
+  `
+    <p class="text">逃げられてしまった...</p>
+    <button class="btn mt" data-js="reset">戻る</button>
+  `;
+
+  // 「ポケモンを探す」後の画面表示
+  const encountHtml =
+  `
+    <p class="name"></p>
+    <div>
+      <img class="img" src="" alt="">
+    </div>
+    <div>
+      <button class="btn" id="catch">捕まえる</button>
+      <button class="btn" data-js="reset">逃げる</button>
+    </div>
+  `;
+
+  // 「捕まえる」成功時
+  const doneHtml =
+  `
+    <p class="name">ゲットしました</p>
+    <div>
+      <img class="img" src="" alt="">
+    </div>
+    <button class="btn" data-js="reset">戻る</button>
+    `;
+
+
+let currentPokemonData = null;
+
+$(document).ready(function() {
+  const $wrapper = $('#wrapper');
+
+  // イベント委譲
+  $wrapper.on('click', '#pokemon_search', function() {
+    handlePokemonSearch();
+  });
+
+  $wrapper.on('click', '#catch', function() {
+    handleCatchAttempt();
+  });
+
+  $wrapper.on('click', '[data-js="reset"]', function() {
+    handleReset();
+  });
+
+  // ポケモンを探すボタンのクリック
+  function handlePokemonSearch() {
+    // ⑤ランダムで1から151までのポケモンを表示
+    const randomPokemonId = Math.floor(Math.random() * 151) + 1;
+    const pokemonUrl = `https://pokeapi.co/api/v2/pokemon/${randomPokemonId}/`;
+
+    // ①：ポケモンの基本情報を取得Ajax通信
+    $.ajax({
+      url: pokemonUrl,
+      method: 'GET',
+      dataType: 'json'
+    })
+    .done(function(data) {
+      currentPokemonData = data;
+
+
+      console.log(data.species.url);// 日本語版を取得するためのURL
+      console.log(data.sprites.front_default); //画像のURL
+
+      // 日本語名を取得、追加でAjax通信
+      $.ajax({
+        url: data.species.url,
+        method: 'GET',
+        dataType: 'json'
+      })
+      .done(function(speciesData) {
+        // ②：成功したらencountHtmlをwrapperに表示
+        $wrapper.html(encountHtml);
+
+        // 日本語の名前を探す
+        const japaneseName = speciesData.names.find(name => name.language.name === 'ja');
+        const pokemonName = japaneseName ? japaneseName.name : data.name;
+
+        // 取得した名前と画像をHTMLに設定
+        $wrapper.find('.name').text(pokemonName);
+        $wrapper.find('.img').attr('src', data.sprites.front_default);
+        $wrapper.find('.img').attr('alt', pokemonName);
+      })
+    
+    
+    })
+    .fail(function() {
+      // ③-2：失敗時はfailHtmlをwrapperに表示
+      $wrapper.html(failHtml);
+    });
+  
+  }
+  // 捕まえるボタンのクリックイベント
+  function handleCatchAttempt() {
+    const success = Math.random() < 0.5; // 50%
+
+    if (success) {
+      // ③-1：成功時はdoneHtmlをwrapperに表示
+      $wrapper.html(doneHtml);
+
+      // ボール
+      const pokeballUrl = 'https://pokeapi.co/api/v2/item/4/';
+      $.ajax({
+        url: pokeballUrl,
+        method: 'GET',
+        dataType: 'json'
+      })
+      .done(function(data) {
+        const pokeballImageUrl = data.sprites.default;
+        $wrapper.find('.img').attr('src', pokeballImageUrl);
+        $wrapper.find('.img').attr('alt', "モンスターボール");
+      })
+      .fail(function() {
+        $wrapper.find('.img').attr('src', '');
+        $wrapper.find('.img').attr('alt', "画像取得失敗");
+      });
+    } else {
+      // ③-2：失敗時はfailHtmlをwrapperに表示
+      $wrapper.html(failHtml);
+    }
+  }
+
+  function handleReset() {
+    // ④：「ポケモンを探す」ボタンに戻す
+    $wrapper.html('<button type="button" class="btn search-btn" id="pokemon_search">ポケモンを探す</button>');
+    currentPokemonData = null; // 保持していたデータもリセット
+  }
+});
+  </script>
+</body>
+</html>
