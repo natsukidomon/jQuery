@@ -92,6 +92,7 @@ $(document).ready(function() {
         dataType: 'json'
       })
       .done(function(speciesData) {
+
         // ②：成功したらencountHtmlをwrapperに表示
         $wrapper.html(encountHtml);
 
@@ -120,8 +121,6 @@ $(document).ready(function() {
     if (success) {
       // ③-1：成功時はdoneHtmlをwrapperに表示
       $wrapper.html(doneHtml);
-
-      // ボール
       const pokeballUrl = 'https://pokeapi.co/api/v2/item/4/';
       $.ajax({
         url: pokeballUrl,
@@ -146,9 +145,9 @@ $(document).ready(function() {
   function handleReset() {
     // ④：「ポケモンを探す」ボタンに戻す
     $wrapper.html('<button type="button" class="btn search-btn" id="pokemon_search">ポケモンを探す</button>');
-    currentPokemonData = null; // 保持していたデータもリセット
+    currentPokemonData = null; // データもリセット
   }
-});
+})
   </script>
 </body>
 </html>
